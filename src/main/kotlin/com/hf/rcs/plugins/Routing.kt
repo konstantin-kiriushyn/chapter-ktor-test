@@ -1,15 +1,14 @@
 package com.hf.rcs.plugins
 
+import com.hf.rcs.client.HfClient
 import com.hf.rcs.data.SingleFeature
 import com.hf.rcs.data.simpleFeatures
-import com.hf.rcs.data.togglesJson
-import io.ktor.server.routing.*
 import io.ktor.http.*
-import io.ktor.server.locations.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
-import io.ktor.server.response.*
 import io.ktor.server.request.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
 
 fun Application.configureRouting() {
 
@@ -31,12 +30,14 @@ fun Application.configureRouting() {
         authenticate("auth-basic") {
             rcsRouting()
         }
+        get("/")  {
+            call.respondText { HfClient().search() }
+        }
     }
 }
 
 fun Route.rcsRouting() {
     route("/rcs") {
-
         //get all features
         get {
             simpleFeatures.sortBy { it.id }

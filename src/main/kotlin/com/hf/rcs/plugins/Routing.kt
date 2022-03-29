@@ -7,23 +7,43 @@ import io.ktor.server.routing.*
 import io.ktor.http.*
 import io.ktor.server.locations.*
 import io.ktor.server.application.*
+import io.ktor.server.auth.*
 import io.ktor.server.response.*
 import io.ktor.server.request.*
 
 fun Application.configureRouting() {
+
+    //setup authentication
+    install(Authentication) {
+        basic("auth-basic") {
+            validate { credentials ->
+                if (credentials.name == "jetbrains" && credentials.password == "foobar") {
+                    UserIdPrincipal(credentials.name)
+                } else {
+                    null
+                }
+            }
+        }
+    }
+
+    //setup routing and use authentication
     routing {
-        rcsRouting()
+        authenticate("auth-basic") {
+            rcsRouting()
+        }
     }
 }
 
 fun Route.rcsRouting() {
     route("/rcs") {
 
+        //get all features
         get {
             simpleFeatures.sortBy { it.id }
             call.respond(simpleFeatures)
         }
 
+        //add new feature
         post {
             try {
                 val newFeature = call.receive<SingleFeature>()
@@ -34,6 +54,7 @@ fun Route.rcsRouting() {
             }
         }
 
+        //delete a feature
         delete("{id}") {
             val featureToDelete = call.parameters["id"] ?: return@delete call.respondText(
                 "Parameter is missing",
@@ -48,6 +69,7 @@ fun Route.rcsRouting() {
             }
         }
 
+        //change value of a feature
         put {
             try {
                 val updateFeature = call.receive<SingleFeature>()
